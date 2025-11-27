@@ -1,4 +1,6 @@
 import { CHARACTERS } from "../Assets/Characters/characterRegistry.js";
+import { CharacterController } from "../Assets/Characters/characterController.js";
+import { createCharacterAnimations } from "../Assets/Characters/characterAnimations.js";
 
 export default class BreakRoomScene extends Phaser.Scene {
   constructor() {
@@ -8,95 +10,50 @@ export default class BreakRoomScene extends Phaser.Scene {
   preload() {
     this.load.image("breakroom", "Assets/Backgrounds/BreakRoom.png");
 
+    // Get which character was selected
     const characterKey = this.registry.get("selectedCharacter");
-    const c = CHARACTERS[characterKey];
-    this.charConfig = c;
+    this.charConfig = CHARACTERS[characterKey];
 
-    // Loop through animations
-    Object.entries(c).forEach(([animKey, def]) => {
-      if (!def.file) return; // skip non-animation keys
+    // Load all sprite sheets for the active character
+    Object.entries(this.charConfig).forEach(([animKey, def]) => {
+      if (!def.file) return;
 
-      this.load.spritesheet(animKey, c.folder + def.file, {
+      this.load.spritesheet(animKey, this.charConfig.folder + def.file, {
         frameWidth: def.frameWidth,
-        frameHeight: def.frameHeight
+        frameHeight: def.frameHeight,
       });
     });
   }
 
   create() {
+    // Room background
     this.add.image(640, 384, "breakroom");
 
-    this.player = this.add.sprite(640, 650, "idle");
-    this.player.setOrigin(0.5, 1);
-    this.physics.world.enable(this.player);
+    // Create the player
+    this.player = this.physics.add.sprite(640, 650, "idle").setOrigin(0.5, 1);
 
-    this.player.body.setCollideWorldBounds(true);
-    this.speed = this.charConfig.speed;
+    // Movement limits
+    const bounds = new Phaser.Geom.Rectangle(
+      80, // LEFT boundary (x start) — 0 means the far left edge of the screen but character width will add some padding
+      550, // TOP boundary (y start) — player cannot go above this (bottom third of the room)
+      1120, // WIDTH — full width of canvas, less character width
+      218 // HEIGHT — this determines the BOTTOM limit:
+      // 768 (canvas height) - 550 (top boundary) = 218 so bottom boundary sits exactly at bottom of screen
+    );
 
-    this.movementBounds = new Phaser.Geom.Rectangle(0, 550, 1280, 370);
+    // Create animations for the chosen character
+    createCharacterAnimations(this, this.charConfig);
 
-    this.createAnimations();
-
-    this.cursors = this.input.keyboard.createCursorKeys();
-  }
-
-  createAnimations() {
-    const c = this.charConfig;
-
-    Object.entries(c).forEach(([key, anim]) => {
-      if (!anim.file) return;
-
-      this.anims.create({
-        key,
-        frames: this.anims.generateFrameNumbers(key, { start: 0, end: anim.frames }),
-        frameRate: 12,
-        repeat: -1
-      });
-    });
+    // Create controller to handle movement & animation
+    this.controller = new CharacterController(
+      this,
+      this.player,
+      this.charConfig,
+      bounds
+    );
   }
 
   update() {
-    const p = this.player;
-    const c = this.cursors;
-    const speed = this.speed;
-
-    p.body.setVelocity(0);
-
-    let moving = false;
-
-    if (c.left.isDown) {
-      p.body.setVelocityX(-speed);
-      p.anims.play("walkLeft", true);
-      moving = true;
-    } else if (c.right.isDown) {
-      p.body.setVelocityX(speed);
-      p.setFlipX(true);
-      p.anims.play("walkLeft", true);
-      moving = true;
-    } else if (c.up.isDown) {
-      p.body.setVelocityY(-speed);
-      p.anims.play("walkUp", true);
-      moving = true;
-    } else if (c.down.isDown) {
-      p.body.setVelocityY(speed);
-      p.anims.play("walkDown", true);
-      moving = true;
-    }
-
-    if (!moving) {
-      p.anims.play("idle", true);
-    }
-
-    this.keepPlayerInBounds();
-  }
-
-  keepPlayerInBounds() {
-    const p = this.player;
-    const b = this.movementBounds;
-
-    if (p.x < b.x) p.x = b.x;
-    if (p.x > b.x + b.width) p.x = b.x + b.width;
-    if (p.y < b.y) p.y = b.y;
-    if (p.y > b.y + b.height) p.y = b.y + b.height;
+    this.controller.update();
   }
 }
