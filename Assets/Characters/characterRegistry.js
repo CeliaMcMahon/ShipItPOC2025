@@ -42,10 +42,10 @@ export const CHARACTERS = {
     folder: "Assets/Characters/Character4/",
     display: "main.png",
 
-    walkLeft: { file: "left.png", frameWidth: 174, frameHeight: 254, frames: 8, frameRate: 12 },
-    walkUp:   { file: "up.png",   frameWidth: 170, frameHeight: 255, frames: 8, frameRate: 12 },
-    walkDown: { file: "down.png", frameWidth: 131, frameHeight: 255, frames: 10, frameRate: 12 },
-    idle:     { file: "idle.png", frameWidth: 142, frameHeight: 250, frames: 7, frameRate: 6 },
+    walkLeft: { file: "left.png", frameWidth: 152, frameHeight: 252, frames: 8, frameRate: 12 },
+    walkUp:   { file: "up.png",   frameWidth: 178, frameHeight: 256, frames: 8, frameRate: 12 },
+    walkDown: { file: "down.png", frameWidth: 167, frameHeight: 255, frames: 8, frameRate: 12 },
+    idle:     { file: "idle.png", frameWidth: 134, frameHeight: 256, frames: 13, frameRate: 6 },
 
     speed: 150,
     displayName: "Character Four"
